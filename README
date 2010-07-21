@@ -1,5 +1,3 @@
-$Id: README,v 1.26 2010/03/19 19:28:18 ianmacd Exp $
-
 
 Introduction
 ------------
@@ -115,7 +113,7 @@ Ruby/AWS is currently beta software. Amongst other things, this means:
   supported, with only small gaps in the functionality of some operations.
 
   Currently implemented operations are:
-  
+
     BrowseNodeLookup
     CustomerContentLookup
     CustomerContentSearch
@@ -156,7 +154,7 @@ Ruby/AWS is currently beta software. Amongst other things, this means:
   There appear to also be (undocumented) Amazon-imposed restrictions on the
   use of multiple operations and batch requests, so some experimentation may
   be required on your part to determine what works and what doesn't.
-  
+
   In short, though, my investigations have demonstrated that no more than two
   operations may be batched together, and no more than two operations may be
   combined in a multiple operation. Nevertheless, by combining two batched
@@ -171,7 +169,7 @@ Ruby/AWS is currently beta software. Amongst other things, this means:
     VehicleSearch
 
   These are supported by Ruby/AWS from version 0.5.0 onwards.
-  
+
 - Classes, methods, constants and instance variables may change name in the
   future. New ones may appear from nowhere and existing ones may change shape,
   grow, shrink or disappear without trace. Such fundamental changes will break
@@ -276,7 +274,7 @@ If you want the user configuration file to be called something other than
 .amazonrc, you may define the $AMAZONRCFILE environment variable.
 
 Once you have your configuration file, you can get started writing your code.
- 
+
 Here's a basic example, showing how to perform an ItemSearch, probably the
 most common type of AWS operation. Please see the ./examples subdirectory for
 more examples of contrived, but working code.
@@ -674,6 +672,6 @@ Licence
 This software is copyright (C) 2008-2010 Ian Macdonald and distributed under
 the terms of the GNU GENERAL PUBLIC LICENSE, a copy of which is included.
 
--- 
+--
 Ian Macdonald
 <ian@caliban.org>

@@ -79,41 +79,18 @@ module Amazon
 	# We have been passed a config file as a string.
 	#
         config_files = [ config_str ]
-	config_class = StringIO
+	config_class = File
 
       else
+	puts 'No config file specified'
 
-	# Perform the usual search for the system and user config files.
-	#
-	config_files = [ File.join( '', 'etc', 'amazonrc' ) ]
-
-	# Figure out where home is. The locations after HOME are for Windows.
-	# [ruby-core:12347]
-	#
-	hp = nil
-	if ENV.key?( 'HOMEDRIVE' ) && ENV.key?( 'HOMEPATH' )
-	  hp = ENV['HOMEDRIVE'] + ENV['HOMEPATH']
-	end
-	home = ENV['AMAZONRCDIR'] || ENV['HOME'] || hp || ENV['USERPROFILE']
-
-	user_rcfile = ENV['AMAZONRCFILE'] || '.amazonrc'
-
-	if home
-	  config_files << File.expand_path( File.join( home, user_rcfile ) )
-	end
-
-	config_class = File
       end
 
       config_files.each do |cf|
 
-	if config_class == StringIO
-	  readable = true
-	else
-	  # We must determine whether the file is readable.
-	  #
-	  readable = File.exists?( cf ) && File.readable?( cf )
-	end
+	# We must determine whether the file is readable.
+	#
+	readable = File.exists?( cf ) && File.readable?( cf )
 
 	if readable
 
@@ -155,6 +132,8 @@ module Amazon
 	    end
 
 	  end
+	else
+	  puts "could not open file"
 	end
 
       end

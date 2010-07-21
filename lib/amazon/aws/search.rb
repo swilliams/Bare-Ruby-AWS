@@ -68,23 +68,17 @@ module Amazon
 	#
 	#  req = Request.new( '0Y44V8FAFNM119CX4TR2', 'calibanorg-20' )
 	#
-	def initialize(key_id=nil, associate=nil, locale=nil, cache=nil,
-		       user_agent=USER_AGENT)
+	def initialize(config=nil)
 
-	  @config ||= Amazon::Config.new
+	  puts "Config: #{config}"
+	  @config = Amazon::Config.new(config)
 
-	  def_locale = locale
-	  locale = 'us' unless locale
+	  locale = @config['locale'] || 'us'
 	  locale.downcase!
 
-	  key_id ||= @config['key_id']
+	  key_id = @config['key_id']
 	  cache = @config['cache'] if cache.nil?
 
-	  # Take locale from config file if no locale was passed to method.
-	  #
-	  if @config.key?( 'locale' ) && ! def_locale
-	    locale = @config['locale']
-	  end
 	  validate_locale( locale )
 
 	  if key_id.nil?
@@ -92,8 +86,8 @@ module Amazon
 	  end
 
 	  @key_id     = key_id
-	  @tag	      = associate || @config['associate'] || DEF_ASSOC[locale]
-	  @user_agent = user_agent
+	  @tag	      = @config['associate'] || DEF_ASSOC[locale]
+	  @user_agent = USER_AGENT
 	  @cache      = unless cache == 'false' || cache == false
 			  Amazon::AWS::Cache.new( @config['cache_dir'] )
 			else
@@ -219,7 +213,7 @@ module Amazon
 
 	  timestamp
 	  params = @query[1..-1].split( '&' ).sort.join( '&' )
-  
+
 	  sign_str = "GET\n%s\n%s\n%s" % [ ENDPOINT[@locale].host,
 					   ENDPOINT[@locale].path,
 					   params ]

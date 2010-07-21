@@ -2,7 +2,8 @@
 #
 # $Id: item_search1,v 1.5 2010/02/20 16:49:12 ianmacd Exp $
 
-require 'amazon/aws/search'
+require '../lib/amazon'
+require '../lib/amazon/aws/search'
 
 include Amazon::AWS
 include Amazon::AWS::Search
