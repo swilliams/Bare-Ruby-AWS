@@ -66,7 +66,7 @@ module Amazon
     #		      ---------
     # VariationPage   150
     # ReviewPage       20
-  
+
 
     # A hash to store character encoding converters.
     #
@@ -243,7 +243,7 @@ module Amazon
 	  retry
 	end
       end
- 
+
 
       # This method can be used to load AWSObject data previously serialised
       # by YAML.dump.
@@ -262,7 +262,7 @@ module Amazon
       #
       def AWSObject.yaml_load(io)
 	io.each do |line|
-    
+
 	  # File data is external, so it's deemed unsafe when $SAFE > 0, which
 	  # is the case with mod_ruby, for example, where $SAFE == 1.
 	  #
@@ -271,22 +271,22 @@ module Amazon
 	  # when Module#const_defined? is invoked a few lines down from here.
 	  #
 	  line.untaint
-	  
+
 	  m = line.match( /Amazon::AWS::AWSObject::([^ ]+)/ )
 	  if m
 	    cl_name = [ m[1] ]
-	  
+
 	    # Module#const_defined? takes 2 parameters in Ruby 1.9.
 	    #
 	    cl_name << false if RUBY_VERSION >= '1.9.0'
-	  
+
 	    unless AWSObject.const_defined?( *cl_name )
 	      AWSObject.const_set( m[1], Class.new( AWSObject ) )
 	    end
-	  
+
 	  end
 	end
-    
+
 	io.rewind
 	YAML.load( io )
       end
@@ -329,7 +329,7 @@ module Amazon
 	end
       end
       private :method_missing
- 
+
 
       def remove_val
 	remove_instance_variable( :@__val__ )
@@ -400,7 +400,7 @@ module Amazon
       # Provide a shortcut down to the data likely to be of most interest.
       # This method is experimental and may be removed.
       #
-      def kernel  # :nodoc: 
+      def kernel  # :nodoc:
 	# E.g. Amazon::AWS::SellerListingLookup -> seller_listing_lookup
 	#
 	stub = Amazon.uncamelise( @__op__.class.to_s.sub( /^.+::/, '' ) )
@@ -458,13 +458,13 @@ module Amazon
       # called internally and is not intended for user code.
       #
       def walk(node)  # :nodoc:
-    
+
 	if node.instance_of?( REXML::Document )
 	  walk( node.root )
-    
+
 	elsif node.instance_of?( REXML::Element )
 	  name = Amazon.uncamelise( node.name )
-    
+
 	  cl_name = [ node.name ]
 
 	  # Module#const_defined? takes 2 parameters in Ruby 1.9.
@@ -480,20 +480,20 @@ module Amazon
 	    #
 	    cl.send( :attr_accessor, :attrib )
 	  end
-    
+
 	  # Instantiate an object in the newly created class.
 	  #
 	  obj = AWS::AWSObject.const_get( node.name ).new
 
 	  sym_name = "@#{name}".to_sym
-    
+
 	  if instance_variable_defined?( sym_name)
     	    instance_variable_set( sym_name,
     	      instance_variable_get( sym_name ) << obj )
 	  else
 	    instance_variable_set( sym_name, AWSArray.new( [ obj ] ) )
 	  end
-    
+
 	  if node.has_attributes?
 	    obj.attrib = {}
 	    node.attributes.each_pair do |a_name, a_value|
@@ -503,7 +503,7 @@ module Amazon
 	  end
 
 	  node.children.each { |child| obj.walk( child ) }
-    
+
 	else # REXML::Text
 	  @__val__ = node.to_s
 	end
@@ -592,7 +592,7 @@ module Amazon
 
     end
 
- 
+
     # This is the base class of all AWS operations.
     #
     class Operation
@@ -810,13 +810,13 @@ module Amazon
       #  is.response_group = ResponseGroup.new( :Large )
       #  il.response_group = ResponseGroup.new( :Small )
       #  mo = MultipleOperation.new( is, il )
-      # 
+      #
       def initialize(*operations)
 
 	# Start with an empty parameter hash.
 	#
 	super( {} )
-	
+
 	# Start off with the first operation and duplicate the original's
 	# parameters to avoid accidental in-place modification.
 	#
@@ -833,7 +833,7 @@ module Amazon
 	end
 
       end
-      
+
     end
 
 
@@ -963,394 +963,7 @@ module Amazon
     end
 
 
-    # This class of look-up deals with searching for *specific* items by some
-    # uniquely identifying attribute, such as the ASIN (*A*mazon *S*tandard
-    # *I*tem *N*umber).
-    #
-    class ItemLookup < Operation
 
-      # Look up a specific item in the AWS catalogue. _id_type_ is the type of
-      # identifier and  _parameters_ is a hash that identifies the item to be
-      # located and narrows the scope of the search.
-      #
-      # Example:
-      #
-      #  il = ItemLookup.new( 'ASIN', { 'ItemId' => 'B000AE4QEC'
-      #					'MerchantId' => 'Amazon' } )
-      #
-      # In the above example, we search for an item, based on its ASIN. The
-      # use of _MerchantId_ restricts the offers returned to those for sale
-      # by Amazon (as opposed to third-party sellers).
-      #
-      def initialize(id_type, parameters)
-	super( { 'IdType' => id_type }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Search for items for sale by a particular seller.
-    #
-    class SellerListingSearch < Operation
-
-      # Search for items for sale by a particular seller. _seller_id_ is the
-      # Amazon seller ID and _parameters_ is an optional hash of parameters
-      # that further refine the scope of the search.
-      #
-      # Example:
-      #
-      #  sls = SellerListingSearch.new( 'A33J388YD2MWJZ',
-      #					{ 'Keywords' => 'Killing Joke' } )
-      #
-      # In the above example, we search seller <b>A33J388YD2MWJ</b>'s listings
-      # for items with the keywords <b>Killing Joke</b>.
-      #
-      def initialize(seller_id, parameters)
-	super( { 'SellerId' => seller_id }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Return specified items in a seller's store.
-    #
-    class SellerListingLookup < ItemLookup
-
-      # Look up a specific item for sale by a specific seller. _id_type_ is
-      # the type of identifier and _parameters_ is a hash that identifies the
-      # item to be located and narrows the scope of the search.
-      #
-      # Example:
-      #
-      #  sll = SellerListingLookup.new( 'AP8U6Y3PYQ9VO', 'ASIN',
-      #					{ 'Id' => 'B0009RRRC8' } )
-      #
-      # In the above example, we search seller <b>AP8U6Y3PYQ9VO</b>'s listings
-      # to find items for sale with the ASIN <b>B0009RRRC8</b>.
-      #
-      def initialize(seller_id, id_type, parameters)
-	super( id_type, { 'SellerId' => seller_id }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Return information about a specific seller.
-    #
-    class SellerLookup < Operation
-
-      # Search for the details of a specific seller. _seller_id_ is the Amazon
-      # ID of the seller in question and _parameters_ is an optional hash of
-      # parameters that further refine the scope of the search.
-      #
-      # Example:
-      #
-      #  sl = SellerLookup.new( 'A3QFR0K2KCB7EG' )
-      #
-      # In the above example, we look up the details of the seller with ID
-      # <b>A3QFR0K2KCB7EG</b>.
-      #
-      def initialize(seller_id, parameters={})
-	super( { 'SellerId' => seller_id }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Obtain the information an Amazon customer has made public about
-    # themselves.
-    #
-    class CustomerContentLookup < Operation
-
-      # Search for public customer data. _customer_id_ is the unique ID
-      # identifying the customer on Amazon and _parameters_ is an optional
-      # hash of parameters that further refine the scope of the search.
-      #
-      # Example:
-      #
-      #  ccl = CustomerContentLookup.new( 'AJDWXANG1SYZP' )
-      #
-      # In the above example, we look up public data about the customer with
-      # the ID <b>AJDWXANG1SYZP</b>.
-      #
-      def initialize(customer_id, parameters={})
-	super( { 'CustomerId' => customer_id }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Retrieve basic Amazon customer data.
-    #
-    class CustomerContentSearch < Operation
-
-      # Retrieve customer information, using an e-mail address or name.
-      #
-      # If _customer_id_ contains an '@' sign, it is assumed to be an e-mail
-      # address. Otherwise, it is assumed to be the customer's name.
-      #
-      # Example:
-      #
-      #  ccs = CustomerContentSearch.new( 'ian@caliban.org' )
-      #
-      # In the above example, we look up customer information about
-      # <b>ian@caliban.org</b>. The *CustomerInfo* response group will return,
-      # amongst other things, a _customer_id_ property, which can then be
-      # plugged into CustomerContentLookup to retrieve more detailed customer
-      # information.
-      #
-      def initialize(customer_id)
-	id = customer_id =~ /@/ ? 'Email' : 'Name'
-	super( { id => customer_id } )
-      end
-
-    end
-
-
-    # Find wishlists, registry lists, etc. created by users and placed on
-    # Amazon. These are items that customers would like to receive as
-    # presnets.
-    #
-    class ListSearch < Operation
-
-      # Search for Amazon lists. _list_type_ is the type of list to search for
-      # and _parameters_ is an optional hash of parameters that narrow the
-      # scope of the search.
-      #
-      # Example:
-      #
-      #  ls = ListSearch.new( 'WishList', { 'Name' => 'Peter Duff' }
-      #
-      # In the above example, we retrieve the wishlist for the Amazon user,
-      # <b>Peter Duff</b>.
-      #
-      def initialize(list_type, parameters)
-	super( { 'ListType' => list_type }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Find the details of specific wishlists, registries, etc.
-    #
-    class ListLookup < Operation
-
-      # Look up and return details about a specific list. _list_id_ is the
-      # Amazon list ID, _list_type_ is the type of list and _parameters_ is an
-      # optional hash of parameters that narrow the scope of the search.
-      #
-      # Example:
-      #
-      #  ll = ListLookup.new( '3P722DU4KUPCP', 'Listmania' )
-      #
-      # In the above example, a *Listmania* list with the ID
-      # <b>3P722DU4KUPCP</b> is retrieved from AWS.
-      #
-      def initialize(list_id, list_type, parameters={})
-	super( { 'ListId'   => list_id,
-	         'ListType' => list_type
-	       }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Amazon use browse nodes as a means of organising the millions of items
-    # in their inventory. An example might be *Carving Knives*. Looking up a
-    # browse node enables you to determine that group's ancestors and
-    # descendants.
-    #
-    class BrowseNodeLookup < Operation
-
-      # Look up and return the details of an Amazon browse node. _node_ is the
-      # browse node to look up and _parameters_ is an optional hash of
-      # parameters that further refine the scope of the search. _parameters_
-      # is currently unused.
-      #
-      # Example:
-      #
-      #  bnl = BrowseNodeLookup.new( '11232', {} )
-      #
-      # In the above example, we look up the browse node with the ID
-      # <b>11232</b>. This is the <b>Social Sciences</b> browse node.
-      #
-      def initialize(node, parameters={})
-	super( { 'BrowseNodeId' => node }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Similarity look-up is for items similar to others.
-    #
-    class SimilarityLookup < Operation
-
-      # Look up items similar to _asin_, which can be a single item or an
-      # array. _parameters_ is an optional hash of parameters that further
-      # refine the scope of the search.
-      #
-      # Example:
-      #
-      #  sl = SimilarityLookup.new( 'B000051WBE' )
-      #
-      # In the above example, we search for items similar to the one with ASIN
-      # <b>B000051WBE</b>.
-      #
-      def initialize(asin, parameters={})
-	super( { 'ItemId' => asin.to_a.join( ',' ) }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Search for entities based on user-defined tags. A tag is a descriptive
-    # word that a customer uses to label entities on Amazon's Web site.
-    # Entities can be items for sale, Listmania lists, guides, etc.
-    #
-    class TagLookup < Operation
-
-      # Look up entities based on user-defined tags. _tag_name_ is the tag to
-      # search on and _parameters_ is an optional hash of parameters that
-      # further refine the scope of the search.
-      #
-      # Example:
-      #
-      #  tl = TagLookup.new( 'Awful' )
-      #
-      # In the example above, we search for entities tagged by users with the
-      # word *Awful*.
-      #
-      def initialize(tag_name, parameters={})
-	super( { 'TagName' => tag_name }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Search for information on previously completed purchases.
-    #
-    class TransactionLookup < Operation
-
-      # Return information on an already completed purchase. _transaction_id_
-      # is actually the order number that is created when you place an order
-      # on Amazon.
-      #
-      # Example:
-      #
-      #  tl = TransactionLookup.new( '103-5663398-5028241' )
-      #
-      # In the above example, we retrieve the details of order number
-      # <b>103-5663398-5028241</b>.
-      #
-      def initialize(transaction_id)
-	super( { 'TransactionId' => transaction_id } )
-      end
-
-    end
-
-
-    # Look up individual vehicle parts.
-    #
-    class VehiclePartLookup < Operation
-
-      # Look up a particular vehicle part. _item_id_ is the ASIN of the part
-      # in question and _parameters_ is an optional hash of parameters that
-      # further refine the scope of the search.
-      #
-      # Although the _item_id_ alone is enough to locate the part, providing
-      # _parameters_ can be useful in determining whether the part looked up
-      # is a fit for a particular vehicle type, as with the *VehiclePartFit*
-      # response group.
-      # 
-      # Example:
-      #
-      #  vpl = VehiclePartLookup.new( 'B000C1ZLI8',
-      #				      { 'Year' => 2008,
-      #				        'MakeId' => 73,
-      #				        'ModelId' => 6039,
-      #				        'TrimId' => 20 } )
-      #
-      #	Here, we search for a <b>2008</b> model *Audi* <b>R8</b> with *Base*
-      #	trim. The required Ids can be found using VehiclePartSearch.
-      #
-      def initialize(item_id, parameters={})
-	super( { 'ItemId' => item_id }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Search for parts for a given vehicle.
-    #
-    class VehiclePartSearch < Operation
-
-      # Find parts for a given _year_, _make_id_ and _model_id_ of vehicle.
-      # _parameters_ is an optional hash of parameters that further refine the
-      # scope of the search.
-      #
-      # Example:
-      #
-      #  vps = VehiclePartSearch.new( 2008, 73, 6039,
-      #				      { 'TrimId' => 20,
-      #				        'EngineId' => 8914 } )
-      #
-      # In this example, we look for parts that will fit a <b>2008</b> model
-      # *Audi* <b>R8</b> with *Base* trim and a <b>4.2L V8 Gas DOHC
-      # Distributorless Naturally Aspirated Bosch Motronic Electronic FI
-      # MFI</b> engine.
-      #
-      # Note that pagination of VehiclePartSearch results is not currently
-      # supported.
-      #
-      # Use VehicleSearch to learn the MakeId and ModelId of the vehicle in
-      # which you are interested.
-      #
-      def initialize(year, make_id, model_id, parameters={})
-	super( { 'Year'	   => year,
-		 'MakeId'  => make_id,
-		 'ModelId' => model_id }.merge( parameters ) )
-      end
-
-    end
-
-
-    # Search for vehicles.
-    #
-    class VehicleSearch < Operation
-
-      # Search for vehicles, based on one or more of the following
-      # _parameters_: Year, MakeId, ModelId and TrimId.
-      #
-      # This method is best used iteratively. For example, first search on
-      # year with a response group of *VehicleMakes* to return all makes for
-      # that year.
-      #
-      # Next, search on year and make with a response group of *VehicleModels*
-      # to find all models for that year and make.
-      #
-      # Then, search on year, make and model with a response group of
-      # *VehicleTrims* to find all trim packages for that year, make and model.
-      #
-      # Finally, if required, search on year, make, model and trim package
-      # with a response group of *VehicleOptions* to find all vehicle options
-      # for that year, make, model and trim package.
-      #
-      # Example:
-      #
-      #  vs = VehicleSearch.new( { 'Year' => 2008,
-      #				   'MakeId' => 20,
-      #				   'ModelId' => 6039,
-      #				   'TrimId' => 20 } )
-      #
-      # In this example, we search for <b>2008 Audi R8</b> vehicles with a
-      # *Base* trim package. Used with the *VehicleOptions* response group,
-      # a list of vehicle options would be returned.
-      #
-      def initialize(parameters={})
-	super
-      end
-
-    end
 
     # Response groups determine which data pertaining to the item(s) being
     # sought is returned. They strongly influence the amount of data returned,
