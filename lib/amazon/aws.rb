@@ -600,15 +600,9 @@ module Amazon
       # These are the types of AWS operation currently implemented by Ruby/AWS.
       #
       OPERATIONS = %w[
-	BrowseNodeLookup      CustomerContentLookup   CustomerContentSearch
-	Help		      ItemLookup	      ItemSearch
-	ListLookup	      ListSearch	      MultipleOperation
-	SellerListingLookup   SellerListingSearch     SellerLookup
-	SimilarityLookup      TagLookup		      TransactionLookup
-	VehiclePartLookup     VehiclePartSearch	      VehicleSearch
+	ItemSearch
 
-	CartAdd		      CartClear		      CartCreate
-	CartGet		      CartModify
+
       ]
 
       attr_reader :kind
@@ -742,128 +736,6 @@ module Amazon
     end
 
 
-    # This class can be used to encapsulate multiple operations in a single
-    # operation for greater efficiency.
-    #
-    class MultipleOperation < Operation
-
-      # This allows you to take multiple Operation objects and encapsulate them
-      # to form a single object, which can then be used to send a single
-      # request to AWS. This allows for greater efficiency, reducing the number
-      # of requests sent to AWS.
-      #
-      # AWS currently imposes a limit of two operations when encapsulating
-      # operations in a multiple operation. Note, however, that one or both of
-      # these operations may be a batched operation. Combining two batched
-      # operations in this way makes it possible to send as many as four
-      # simple operations to AWS in a single MultipleOperation request.
-      #
-      # _operations_ is an array of objects subclassed from Operation, such as
-      # ItemSearch, ItemLookup, etc.
-      #
-      # Please note the following implementation details:
-      #
-      # - As mentioned above, Amazon currently imposes a limit of two
-      #   operations encapsulated in a MultipleOperation.
-      #
-      # - To use a different set of response groups for each encapsulated
-      #   operation, assign to each operation's @response_group attribute prior
-      #   to encapulation in a MultipleOperation.
-      #
-      # - To use the same set of response groups for all encapsulated
-      #   operations, you can directly assign to the @response_group attribute
-      #   of the MultipleOperation. This will propagate to the encapsulated
-      #   operations.
-      #
-      # - One or both operations may have multiple results pages available,
-      #   but only the first page will be returned by your requests. If you
-      #   need subsequent pages, you must perform the operations separately.
-      #   It is not possible to page through the results of a MultipleOperation
-      #   response.
-      #
-      # - In this implementation, an error in any of the constituent operations
-      #   will cause an exception to be thrown. If you don't want partial
-      #   success (i.e. the success of fewer than all of the operations) to be
-      #   treated as failure, you should perform the operations separately.
-      #
-      # - MultipleOperation is intended for encapsulation of objects from
-      #   different classes, e.g. an ItemSearch and an ItemLookup. If you just
-      #   want to batch operations of the same class, Operation#batch
-      #   provides an alternative.
-      #
-      #   In fact, if you create a MultipleOperation encapsulating objects of
-      #   the same class, Ruby/AWS will actually apply simple batch syntax to
-      #   your request, so it amounts to the same as using Operation#batch.
-      #
-      # - Although all of the encapsulated operations can be batched
-      #   operations, Amazon places a limit of two on the number of same-class
-      #   operations that can be carried out in any one request. This means
-      #   that you cannot encapsulate two batched requests from the same
-      #   class, so attempting, for example, four ItemLookup operations via
-      #   two batched ItemLookup operations will not work.
-      #
-      # Example:
-      #
-      #  is = ItemSearch.new( 'Books', { 'Title' => 'Ruby' } )
-      #  il = ItemLookup.new( 'ASIN', { 'ItemId' => 'B0013DZAYO',
-      #					'MerchantId' => 'Amazon' } )
-      #  is.response_group = ResponseGroup.new( :Large )
-      #  il.response_group = ResponseGroup.new( :Small )
-      #  mo = MultipleOperation.new( is, il )
-      #
-      def initialize(*operations)
-
-	# Start with an empty parameter hash.
-	#
-	super( {} )
-
-	# Start off with the first operation and duplicate the original's
-	# parameters to avoid accidental in-place modification.
-	#
-	operations.flatten!
-	@params = operations.shift.params.freeze.dup
-
-	# Add subsequent operations' parameter hashes, protecting them
-	# against accidental in-place modification.
-	#
-	operations.each do |op|
-	  op.params.freeze.each do |op_kind, op_arr|
-	    @params[op_kind].concat( op_arr )
-	  end
-	end
-
-      end
-
-    end
-
-
-    # This class of operation aids in finding out about AWS operations and
-    # response groups.
-    #
-    class Help < Operation
-
-      # Return information on AWS operations and response groups.
-      #
-      # For operations, required and optional parameters are returned, along
-      # with information about which response groups the operation can use.
-      #
-      # For response groups, The list of operations that can use that group is
-      # returned, as well as the list of response tags returned by the group.
-      #
-      # _help_type_ is the type of object for which help is being sought, such
-      # as *Operation* or *ResponseGroup*. _about_ is the name of the
-      # operation or response group you need help with, and _parameters_ is an
-      # optional hash of parameters that further refine the request for help.
-      #
-      def initialize(help_type, about, parameters={})
-	super( { 'HelpType' => help_type,
-		 'About'    => about
-	       }.merge( parameters ) )
-      end
-
-    end
-
-
     # This is the class for the most common type of AWS look-up, an
     # ItemSearch. This allows you to search for items that match a set of
     # broad criteria. It returns items for sale by Amazon merchants and most
@@ -975,23 +847,8 @@ module Amazon
 
       # The default type of response group to use with each type of operation.
       #
-      DEFAULT = { 'BrowseNodeLookup'	  => [ :BrowseNodeInfo, :TopSellers ],
-		  'CustomerContentLookup' => [ :CustomerInfo, :CustomerLists ],
-		  'CustomerContentSearch' => :CustomerInfo,
-		  'Help'		  => :Help,
-		  'ItemLookup'		  => :Large,
-		  'ItemSearch'		  => :Large,
-		  'ListLookup'		  => [ :ListInfo, :Small ],
-		  'ListSearch'		  => :ListInfo,
-		  'SellerListingLookup'	  => :SellerListing,
-		  'SellerListingSearch'	  => :SellerListing,
-		  'SellerLookup'	  => :Seller,
-		  'SimilarityLookup'	  => :Large,
-		  'TagLookup'		  => [ :Tags, :TagsSummary ],
-		  'TransactionLookup'	  => :TransactionDetails,
-		  'VehiclePartLookup'	  => :VehiclePartFit,
-		  'VehiclePartSearch'	  => :VehicleParts,
-		  'VehicleSearch'	  => :VehicleMakes
+      DEFAULT = {
+		  'ItemSearch'		  => :Large
       }
 
       # Define a set of one or more response groups to be applied to items
