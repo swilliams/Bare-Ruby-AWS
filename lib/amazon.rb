@@ -71,7 +71,7 @@ module Amazon
     # <tt>/etc/amazonrc</tt> and <tt>~/.amazonrc</tt> are read if they exist
     # and are readable.
     #
-    def initialize(config_str=nil)
+    def initialize(config_str)
       locale = nil
 
       if config_str
