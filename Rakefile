@@ -8,28 +8,26 @@ require 'rake/gempackagetask'
 
 spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
-  s.name = 'ruby-aaws'
-  s.rubyforge_project = 'Ruby/(A)AWS'
-  s.version = '0.8.1'
-  s.author = 'Ian Macdonald'
-  s.email =  'ian@caliban.org'
-  s.summary = 'Ruby interface to Amazon Associates Web Services'
+  s.name = 'bare-ruby-aws'
+  s.version = '0.1'
+  s.author = 'Scott Williams'
+  s.email =  'scott@krazyyak.com'
+  s.summary = 'Basic Ruby interface to search Amazon Associates Web Services'
   s.description = <<-EOF
+  A Fork of the Ruby/AWS library that removes operations other than item-search
+  and allows a config file location to be specified.
+
   Ruby/AWS is a Ruby language library that allows the programmer to retrieve
   information from Amazon via the Product Advertising API. In addition to the
   original amazon.com site, amazon.co.uk, amazon.de, amazon.fr, amazon.ca and
   amazon.co.jp are also supported.
- 
-  In addition to wrapping the AWS API, Ruby/AWS provides geolocation of
-  clients, transparent fetching of all results for a given search (not just the
-  first 10) and a host of other features.
   EOF
-  s.homepage = 'http://www.caliban.org/ruby/ruby-aws/'
-  s.files = FileList[ 'example/*', 'lib/*.rb', 'lib/**/*.rb', 'test/*' ].to_a
+  s.homepage = 'http://github.com/swilliams/Bare-Ruby-AWS'
+  s.files = FileList[ 'lib/*.rb', 'lib/**/*.rb' ].to_a
   s.require_path = 'lib'
   s.test_files = Dir.glob( 'test/*.rb' )
   s.has_rdoc = true
-  s.extra_rdoc_files = %w[ COPYING INSTALL NEWS README README.rdoc ]
+  s.extra_rdoc_files = %w[ COPYING INSTALL NEWS README ]
   s.required_ruby_version = '>= 1.8.6'
 #  s.autorequire = 'amazon/aws/search'
 end
